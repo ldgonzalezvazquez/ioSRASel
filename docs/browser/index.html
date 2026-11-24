@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SRASel · Browser mode (experimental)</title>
+<meta name="description" content="Run the SRASel analysis stages in your browser (Python in WebAssembly) on BAM files or bam-readcount tables. Experimental; your data stays on your computer.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body class="app" data-view="data">
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- one homogeneous icon set (stroke icons, currentColor); no icon library -->
+<svg hidden width="0" height="0" aria-hidden="true" focusable="false">
+  <symbol id="i-files" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></symbol>
+  <symbol id="i-spin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" opacity=".25"/><path d="M12 4a8 8 0 0 1 8 8"/></symbol>
+  <symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16"/></symbol>
+</svg>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <a class="brand" href="../" aria-label="SRASel, the three ways of running it">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="20" cy="20" r="8"/><circle cx="20" cy="20" r="2.5" fill="currentColor" stroke="none"/><path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M31.3 8.7l-3.5 3.5M12.2 27.8l-3.5 3.5"/></svg>
+      <span><b>SRASel</b><small>Browser mode (experimental)</small></span>
+    </a>
+    <nav aria-label="Analysis steps">
+      <div class="navtabs" role="tablist" aria-label="Steps" aria-orientation="vertical">
+        <button type="button" role="tab" id="tab-data" aria-controls="panel-data" aria-selected="true"><svg class="i lg" aria-hidden="true"><use href="#i-files"/></svg><span class="lab">Input data</span><svg class="i chk" aria-hidden="true"><use href="#i-check"/></svg></button>
+        <button type="button" role="tab" id="tab-run" aria-controls="panel-run" aria-selected="false" tabindex="-1" disabled><svg class="i lg" aria-hidden="true"><use href="#i-play"/></svg><span class="lab">Run analysis</span><svg class="i chk" aria-hidden="true"><use href="#i-check"/></svg></button>
+        <button type="button" role="tab" id="tab-results" aria-controls="panel-results" aria-selected="false" tabindex="-1" disabled><svg class="i lg" aria-hidden="true"><use href="#i-chart"/></svg><span class="lab">Results</span><svg class="i chk" aria-hidden="true"><use href="#i-check"/></svg></button>
+      </div>
+    </nav>
+    <div class="side-links">
+      <a href="../BROWSER_MODE.md" id="nav-docs"><svg class="i lg" aria-hidden="true"><use href="#i-book"/></svg><span class="lab">Documentation</span><svg class="i ext" aria-hidden="true"><use href="#i-ext"/></svg></a>
+      <button type="button" id="nav-examples" title="Go to the demo loader on the Input data screen"><svg class="i lg" aria-hidden="true"><use href="#i-layers"/></svg><span class="lab">Examples</span></button>
+      <button type="button" id="nav-about"><svg class="i lg" aria-hidden="true"><use href="#i-info"/></svg><span class="lab">About</span></button>
+    </div>
+  </aside>
+
+  <div class="content">
+    <header class="topbar">
+      <ol class="stepper" id="stepper" aria-label="Progress">
+        <li id="st-data" class="current" aria-current="step"><span class="dot">1</span><span class="nm">Input data</span></li>
+        <li id="st-run"><span class="dot">2</span><span class="nm">Run analysis</span></li>
+        <li id="st-results"><span class="dot">3</span><span class="nm">Results</span></li>
+      </ol>
+      <span class="grow"></span>
+      <span id="rt-pill" class="rt" role="status" aria-live="polite">Python runtime: not loaded</span>
+      <button type="button" id="theme-btn" class="linkbtn" aria-label="Toggle light or dark theme"><svg class="i" aria-hidden="true"><use href="#i-theme"/></svg>Theme</button>
+    </header>
+
+    <main id="main" class="page">
+      <noscript><p class="msg err">This page needs JavaScript and WebAssembly.</p></noscript>
+
+      <!-- 1 · Input data -->
+      <section id="panel-data" class="view" role="tabpanel" aria-labelledby="tab-data" tabindex="-1">
+        <div class="page-head">
+          <h1>Input data</h1>
+          <p>Choose the reads, the dates and the reference. Your data stays in this tab; only the Python runtime is downloaded, from cdn.jsdelivr.net.</p>
+        </div>
+        <form id="form" novalidate autocomplete="off">
+
+          <!-- A · input files -->
+          <div class="card c" id="card-files">
+            <div class="hd">
+              <h2><span class="ltr" aria-hidden="true">A</span>Input files</h2>
+              <span class="actions"><button type="button" class="btn sm" id="btn-demo">Load demo</button><button type="button" class="btn sm" id="btn-clear">Clear</button></span>
+            </div>
+            <div class="bd">
+              <div class="drop" id="dropzone">
+                <svg class="i lg big-ico" aria-hidden="true"><use href="#i-upload"/></svg>
+                <p class="dz-title">Drag BAM files, a folder or bam-readcount tables here</p>
+                <p class="sum">or choose them</p>
+                <div class="line">
+                  <span class="pick"><input type="file" id="f-bams" multiple accept=".bam" aria-label="BAM files" aria-describedby="h-reads"><span class="btn">Choose BAM files</span></span>
+                  <span class="pick"><input type="file" id="f-bamdir" webkitdirectory directory multiple aria-label="Folder with BAM files" aria-describedby="h-reads"><span class="btn">Choose BAM folder</span></span>
+                  <span class="pick"><input type="file" id="f-tables" multiple accept=".txt,.tsv,.gz,text/plain" aria-label="bam-readcount tables" aria-describedby="h-reads"><span class="btn">Choose bam-readcount tables</span></span>
+                </div>
+              </div>
+              <p class="hint" id="h-reads">Name samples &lt;patient&gt;-&lt;n&gt;[a|b], e.g. P1-3.bam or P1-3_RG_readcount.txt. BAM files and tables can be mixed, but not the same sample twice. BAM files are read in place and never uploaded.</p>
+              <p id="drop-note" class="msg" role="status" aria-live="polite"></p>
+              <ul id="bams-list" class="flist" aria-label="BAM files loaded"></ul>
+              <ul id="tables-list" class="flist" aria-label="bam-readcount tables loaded"></ul>
+              <p id="files-total" class="totals"></p>
+            </div>
+          </div>
+
+          <!-- B · reference and metadata -->
+          <div class="card c" id="card-ref">
+            <div class="hd"><h2><span class="ltr" aria-hidden="true">B</span>Reference &amp; metadata</h2></div>
+            <div class="bd">
+              <div>
+                <p class="sub-h" id="l-ref">Reference</p>
+                <div class="segopt">
+                  <label class="segsw"><input type="checkbox" id="seg-on" aria-describedby="seg-note"><span class="rname">Segmented virus</span><span class="sum">the genome is in several pieces (influenza, LCMV, rotavirus…): lets you give one file per segment</span></label>
+                  <div id="seg-note" class="callout segnote" hidden>
+                    <p><strong>Segmented virus.</strong> Your BAMs hold one sequence per segment. The reference must contain <b>every</b> segment, and every BAM must have the same segments.</p>
+                    <ul>
+                      <li><b>GenBank file(s)</b>: one file per segment, or one file with all the records.</li>
+                      <li><b>FASTA and gene list</b>: one FASTA and one gene list per segment (or one of each with all the segments); this page joins them in the order of the lists.</li>
+                      <li>The other ways (own consensus, NCBI accessions) are available in <code>srasel run</code> and <code>srasel web</code>, one source per segment.</li>
+                    </ul>
+                    <p>Keep the same order as the BAM header (<code>samtools view -H sample.bam | grep '^@SQ'</code>) and the same order every time: the order only changes the internal numbering of positions and, slightly, the permutation p-values.</p>
+                  </div>
+                </div>
+                <div class="refopts" role="radiogroup" aria-labelledby="l-ref">
+                  <div class="ropt">
+                    <label class="rlab"><input type="radio" name="rkind" value="genbank" checked><span class="rname">GenBank file(s)</span><span class="sum">the annotated record your reads were aligned to; works offline</span></label>
+                    <div id="r-genbank" class="pane">
+                      <div class="field">
+                        <div class="line"><span class="pick"><input type="file" id="f-gb" multiple accept=".gb,.gbk,.gbff,.genbank,.txt,text/plain" aria-label="GenBank reference files" aria-describedby="h-gb"><span class="btn">Choose GenBank file(s)</span></span></div>
+                        <ul id="gb-list" class="filelist rm" aria-live="polite" aria-label="GenBank files chosen"></ul>
+                        <p class="hint" id="h-gb">The annotated record(s) the reads were aligned to. Choosing again adds files to the list. For a segmented virus, turn on “Segmented virus” above.</p>
+                        <p class="hint seg-only">One file per segment (or one file with every segment), in the order of the BAM header. Choosing again adds files to the list; use the arrows to reorder them.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ropt">
+                    <label class="rlab"><input type="radio" name="rkind" value="fasta_genes" aria-describedby="d-fg"><span class="rname">FASTA and gene list</span><span class="sum" id="d-fg">no GenBank file: your sequence plus a table of genes; works offline</span></label>
+                    <div id="r-fasta_genes" class="pane" hidden>
+                      <div id="fg-single" class="seg-off">
+                      <div class="field"><span class="lbl" id="l-fg-fasta">Sequence (FASTA)</span>
+                        <div class="line"><span class="pick"><input type="file" id="f-fasta" accept=".fa,.fasta,.fna,.fas,.txt,text/plain" aria-labelledby="l-fg-fasta" aria-describedby="h-fasta"><span class="btn">Choose FASTA</span></span></div>
+                        <ul id="fasta-list" class="filelist rm" aria-live="polite" aria-label="FASTA file chosen"></ul>
+                        <p class="hint" id="h-fasta">The sequence your BAMs were aligned to (.fa, .fasta, .fna, .fas).</p></div>
+                      <div class="field"><span class="lbl" id="l-fg-genes">Gene list</span>
+                        <div class="line"><span class="pick"><input type="file" id="f-genes" accept=".tsv,.txt,.gff,.gff3,text/plain,text/tab-separated-values" aria-labelledby="l-fg-genes" aria-describedby="h-genes"><span class="btn">Choose gene list</span></span></div>
+                        <ul id="genes-list" class="filelist rm" aria-live="polite" aria-label="Gene list chosen"></ul>
+                        <p class="hint" id="h-genes">A tab-separated table with a header (.tsv, .txt), or a GFF3 (.gff, .gff3).</p></div>
+                      </div>
+                      <div id="fg-multi" class="seg-only">
+                        <div class="field"><span class="lbl" id="l-fgm-fasta">Sequences (FASTA): one file per segment, or one with all</span>
+                          <div class="line"><span class="pick"><input type="file" id="f-fasta-seg" multiple accept=".fa,.fasta,.fna,.fas,.txt,text/plain" aria-labelledby="l-fgm-fasta" aria-describedby="h-fgm-fasta"><span class="btn">Choose FASTA file(s)</span></span></div>
+                          <ul id="fasta-seg-list" class="filelist rm" aria-live="polite" aria-label="FASTA files chosen"></ul>
+                          <p class="hint" id="h-fgm-fasta">Every sequence needs its own name, the same one your BAMs use. The files are joined in the order of this list. Choosing again adds files.</p></div>
+                        <div class="field"><span class="lbl" id="l-fgm-genes">Gene lists: one file per segment, or one with all</span>
+                          <div class="line"><span class="pick"><input type="file" id="f-genes-seg" multiple accept=".tsv,.txt,.gff,.gff3,text/plain,text/tab-separated-values" aria-labelledby="l-fgm-genes" aria-describedby="h-fgm-genes"><span class="btn">Choose gene list(s)</span></span></div>
+                          <ul id="genes-seg-list" class="filelist rm" aria-live="polite" aria-label="Gene lists chosen"></ul>
+                          <p class="hint" id="h-fgm-genes">Tables (.tsv, .txt) or GFF3 files, all in the same format. The <b>contig</b> column says which segment each gene is in. The columns may differ between files. Choosing again adds files.</p></div>
+                      </div>
+                      <div class="field">
+                        <details class="fmt" id="fg-format">
+                          <summary>Format</summary>
+                          <div class="fmtbody">
+                            <p>One row per gene, columns separated by tabs, first row is the header:</p>
+                            <pre class="log small">contig  gene  start  end  strand  [type]  [product]  [codon_start]  [transl_table]</pre>
+                            <ul>
+                              <li><b>contig</b>: the sequence name, as in the FASTA and in your BAMs.</li>
+                              <li><b>start</b>, <b>end</b>: 1-based positions, both inclusive (start &lt; end).</li>
+                              <li><b>strand</b>: + or -.</li>
+                              <li>Optional columns, found by their header name: <b>type</b> CDS (default) or mat_peptide; <b>product</b>; <b>codon_start</b> 1, 2 or 3 (default 1); <b>transl_table</b> genetic code (default 1).</li>
+                              <li>A gene in several pieces: several rows with the same contig and gene.</li>
+                              <li>Segmented virus: the <b>contig</b> column names the segment of each gene.</li>
+                            </ul>
+                            <p>Example:</p>
+                            <pre class="log small" id="fg-example"></pre>
+                            <button type="button" class="btn sm" id="fg-example-dl">Download an example</button>
+                          </div>
+                        </details></div>
+                    </div>
+                  </div>
+                  <div class="ropt off">
+                    <label class="rlab"><input type="radio" name="rkind" value="consensus" disabled aria-describedby="d-cons"><span class="rname">Own consensus (needs minimap2)</span><span class="sum" id="d-cons">not available online: minimap2 does not run in a browser; use <code>srasel run</code> or <code>srasel web</code></span></label>
+                  </div>
+                  <div class="ropt off">
+                    <label class="rlab"><input type="radio" name="rkind" value="ncbi" disabled aria-describedby="d-ncbi"><span class="rname">NCBI accession / virus name</span><span class="sum" id="d-ncbi">not available online: this page does not download from NCBI; use <code>srasel run</code> or <code>srasel web</code></span></label>
+                  </div>
+                  <div class="ropt off">
+                    <label class="rlab"><input type="radio" name="rkind" value="from_bam" disabled aria-describedby="d-fb"><span class="rname">From the BAM headers (needs internet)</span><span class="sum" id="d-fb">not available online: it downloads from NCBI; use <code>srasel run</code> or <code>srasel web</code></span></label>
+                  </div>
+                </div>
+                <p class="hint which" id="which-ref"><strong>Which reference do I need?</strong> GenBank = a sequence plus where its genes are. Use the one your BAMs were aligned to (contig names must match). Aligned to your own consensus? Give its annotated GenBank (consensus_annotated.gb), or a FASTA + gene list, or (command line / local web) the consensus plus a related annotated genome from which the genes are transferred.</p>
+                <p class="hint" id="tip-consensus">BAMs aligned to your own consensus: load that consensus annotated as a GenBank (<code>consensus_annotated.gb</code>, written to <code>reference/references.gb</code> by <code>srasel run --consensus</code>).</p>
+              </div>
+
+              <hr class="divider">
+              <div>
+                <p class="sub-h"><label for="t-dates">Dates</label>
+                  <span class="helpwrap"><button type="button" class="help" aria-label="About the dates" aria-describedby="tip-dates">?</button><span class="tip" role="tooltip" id="tip-dates">One line per sample: its name, a tab, its date and, optionally, a tab and the patient. The text is the single source of truth: the Samples table below edits it, and editing it redraws the table.</span></span></p>
+                <div class="line">
+                  <span class="pick"><input type="file" id="f-dates" accept=".tsv,.txt,.csv,text/plain" aria-label="Dates file"><span class="btn">Choose dates file</span></span>
+                  <span class="sum" id="dates-src">or paste it below, or type each date in the table</span>
+                </div>
+                <textarea id="t-dates" rows="4" spellcheck="false" aria-describedby="h-dates" placeholder="P1-1a&#9;14/03/24"></textarea>
+                <p class="hint" id="h-dates">One line per sample: name, tab, date[, tab, patient]. Formats as in <code>srasel run</code> (23/03/2020, 2020-03-23, 23-Mar-2020, or days). You can also type each date in the Samples table below; the text and the table always show the same thing.</p>
+              </div>
+
+              <hr class="divider" id="sec-samples">
+              <div>
+                <p class="sub-h">Samples</p>
+                <p class="hint" id="samples-empty">Detected samples appear here once you choose files.</p>
+                <div class="tablewrap" id="samples-wrap" hidden>
+                  <table class="grid samples" id="samples"><caption class="sr">Samples: one row per file; patient and date can be edited and change the dates text above</caption>
+                    <thead><tr><th scope="col">Sample</th><th scope="col">Patient</th><th scope="col">Date</th><th scope="col">Input</th><th scope="col"><span class="sr">Remove</span></th></tr></thead>
+                    <tbody id="samples-body"></tbody></table>
+                </div>
+                <div class="line" id="samples-tools" hidden>
+                  <span class="inline" id="s-patient" hidden>
+                    <label for="fill-patient" id="fill-patient-lbl" class="sum"></label>
+                    <input id="fill-patient" type="text" maxlength="40" spellcheck="false" autocomplete="off">
+                    <button type="button" class="btn sm" id="fill-patient-btn">Apply</button>
+                  </span>
+                </div>
+                <div id="samples-note" aria-live="polite"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- C · analysis parameters -->
+          <div class="card c" id="card-params">
+            <div class="hd"><h2><span class="ltr" aria-hidden="true">C</span>Analysis parameters</h2></div>
+            <div class="bd">
+              <div class="params">
+                <div class="fld">
+                  <div class="fl"><label for="p-nperm">Permutations</label>
+                    <span class="helpwrap"><button type="button" class="help" aria-label="About permutations" aria-describedby="tip-nperm">?</button><span class="tip" role="tooltip" id="tip-nperm">Number of random re-orderings of the sampling dates used to compute the permutation p-value of each variant. More permutations give finer p-values: the smallest possible p is 1/(permutations+1); with few dates it is also limited by the number of possible orderings. Default 2000.</span></span></div>
+                  <input type="number" id="p-nperm" min="10" max="100000" step="1" value="2000">
+                  <p class="hint">Default 2000. p resolution is 1/(nperm+1).</p>
+                </div>
+                <div class="fld">
+                  <div class="fl"><label for="p-seed">Seed</label>
+                    <span class="helpwrap"><button type="button" class="help" aria-label="About the seed" aria-describedby="tip-seed">?</button><span class="tip" role="tooltip" id="tip-seed">Starting value of the random generator used for the permutations. The same inputs and the same seed give the same p-values. Default 1.</span></span></div>
+                  <input type="number" id="p-seed" min="0" max="2147483647" step="1" value="1">
+                  <p class="hint">Same seed and inputs give the same p-values.</p>
+                </div>
+                <div class="fld">
+                  <div class="fl"><label for="p-delta">Minimum |Δf|</label>
+                    <span class="helpwrap"><button type="button" class="help" aria-label="About the minimum change in frequency" aria-describedby="tip-delta">?</button><span class="tip" role="tooltip" id="tip-delta">Threshold on the fitted change in frequency over the follow-up (slope times the time between the first and last date, as a fraction of reads). Variants with a smaller change are not tested and cannot be labelled. Default 0.03.</span></span></div>
+                  <input type="number" id="p-delta" min="0.001" max="1" step="0.001" value="0.03">
+                  <p class="hint">Default 0.03. Smaller changes are not tested.</p>
+                </div>
+              </div>
+              <details class="extra" id="opts">
+                <summary><svg class="i chev" aria-hidden="true"><use href="#i-chev"/></svg>Additional options <span class="sum" id="opts-sum"></span></summary>
+                <div class="xb">
+                  <div class="opts">
+                    <div><div class="fl"><label for="p-patient">Patient name</label>
+                      <span class="helpwrap"><button type="button" class="help" aria-label="About the patient name" aria-describedby="tip-patient">?</button><span class="tip" role="tooltip" id="tip-patient">Used only for files that are not named &lt;patient&gt;-&lt;n&gt; and have no patient in the dates file: all of those samples get this name.</span></span></div>
+                      <input type="text" id="p-patient" maxlength="40" spellcheck="false" autocomplete="off">
+                      <p class="hint">Only for files not named &lt;patient&gt;-&lt;n&gt; and without a patient in the dates file.</p></div>
+                    <div class="wide"><div class="fl"><label for="p-alias">Contig aliases</label>
+                      <span class="helpwrap"><button type="button" class="help" aria-label="About contig aliases" aria-describedby="tip-alias">?</button><span class="tip" role="tooltip" id="tip-alias">Only needed when a sequence has a different name in your BAM files and in the reference. Write BAM_NAME=REFERENCE_NAME, one pair per line.</span></span></div>
+                      <textarea id="p-alias" rows="2" spellcheck="false" placeholder="BAM_NAME=REFERENCE_NAME"></textarea>
+                      <p class="hint">Only if a sequence is named differently in your BAMs and in the reference; one per line.</p></div>
+                  </div>
+                  <p class="hint"><label class="check"><input type="checkbox" id="p-noreport" aria-describedby="tip-noreport"> Skip the HTML report</label>
+                    <span class="helpwrap"><button type="button" class="help" aria-label="About skipping the report" aria-describedby="tip-noreport">?</button><span class="tip" role="tooltip" id="tip-noreport">Do not build the interactive HTML report (step 7). The tables are the same; the report tabs of the results are then not available.</span></span></p>
+                  <p class="hint">Single process: the number of threads does not apply here.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- D · validation summary and the way on -->
+          <div class="card c" id="card-valid">
+            <div class="hd"><h2><span class="ltr" aria-hidden="true">D</span>Validation summary</h2></div>
+            <div class="bd">
+              <dl class="kv" id="val-kv">
+                <dt>BAM files</dt><dd id="v-bams">0</dd>
+                <dt>bam-readcount tables</dt><dd id="v-tables">0</dd>
+                <dt>Samples with a valid date</dt><dd id="v-dates">0 of 0</dd>
+                <dt>Patients detected</dt><dd id="v-patients">0</dd>
+                <dt>Reference</dt><dd id="v-ref">not chosen</dd>
+              </dl>
+              <ul class="issues" id="val-issues" aria-live="polite" aria-label="Problems and warnings"></ul>
+            </div>
+            <div class="foot-actions">
+              <p id="form-msg" class="msg" role="status" aria-live="polite"></p>
+              <button type="button" class="btn primary big push" id="btn-continue" disabled>Continue to Run analysis<svg class="i" aria-hidden="true"><use href="#i-chev"/></svg></button>
+            </div>
+          </div>
+
+          <div class="card c">
+            <div class="bd tight">
+              <details class="notes">
+                <summary>Notes</summary>
+                <ul>
+                  <li>Experimental: it can be slower than the command line and can fail on browser memory limits. For routine work use the <a href="../#m-cli">command line</a> or the <a href="../#m-local">local web interface</a>.</li>
+                  <li>BAM files must be coordinate-sorted (no index needed); a folder uses every .bam inside; tables ending in .gz are decompressed here; NCBI download is not available.</li>
+                  <li>BAM files are counted here with pysam, using the same rules as <code>bam-readcount -q 20 -b 20 -w 0</code> (identical counts on the 47 real BAMs tested; see <a href="../BAM_COUNTER.md">BAM_COUNTER.md</a>), and are read in place, never uploaded. Tables from <code>srasel run</code> or <code>bam-readcount</code> are faster.</li>
+                  <li>Some options of <code>srasel run</code> are not offered here; the full table is in <a href="../OPTIONS_PARITY.md">OPTIONS_PARITY.md</a>.
+                    <details class="adv" id="not-here">
+                      <summary>Not available in the browser</summary>
+                      <ul>
+                        <li><code>--virus</code>, <code>--ref</code>, <code>--email</code>: no NCBI download here; load the GenBank file (or a FASTA and a gene list), or use the command line or the local interface.</li>
+                        <li><code>--consensus</code>, <code>--consensus-source</code>: transferring genes needs minimap2; load the annotated consensus (<code>consensus_annotated.gb</code>) as the GenBank file, or give a FASTA and a gene list.</li>
+                        <li><code>--samples</code>, <code>--fragments</code>: name the files <code>&lt;patient&gt;-&lt;n&gt;</code> or add a patient column to the dates file; one BAM per fragment needs the command line or the local interface.</li>
+                        <li><code>--check-only</code>: the checks use samtools; use the command line or the local interface (Check inputs).</li>
+                        <li><code>--threads</code>: one process in the browser; the results do not depend on it.</li>
+                        <li><code>--resume</code>, <code>--out</code>, <code>--yes</code>: nothing is kept between runs in a tab, results come as a zip, and nothing is asked.</li>
+                      </ul>
+                    </details></li>
+                  <li>The first load needs internet to fetch the runtime (Pyodide <span data-pyodide>…</span>) from cdn.jsdelivr.net; a second analysis in the same tab works offline. Closing the tab discards everything, so download your results first.</li>
+                </ul>
+              </details>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- 2 · Run analysis -->
+      <section id="panel-run" class="view" role="tabpanel" aria-labelledby="tab-run" tabindex="-1" hidden>
+        <div class="page-head">
+          <h1 id="run-title">Run analysis</h1>
+          <p id="run-sub">Check the inputs and the parameters, then start. The analysis runs in this browser tab.</p>
+        </div>
+
+        <!-- before running -->
+        <div id="run-pre" class="run-grid">
+          <div class="view">
+            <div class="card c">
+              <div class="hd"><h2>Inputs</h2></div>
+              <div class="bd"><dl class="kv" id="run-inputs"></dl></div>
+            </div>
+            <div class="card c">
+              <div class="hd"><h2>Parameters</h2></div>
+              <div class="bd"><dl class="kv" id="run-params"></dl></div>
+            </div>
+          </div>
+          <div class="card run-box">
+            <svg class="i lg" aria-hidden="true"><use href="#i-play"/></svg>
+            <h2>Run analysis</h2>
+            <p class="muted" id="run-box-text">The stages are listed as soon as the run starts, each with its measured time.</p>
+            <button type="submit" form="form" class="btn primary big" id="btn-run" disabled>Run analysis</button>
+            <button type="button" class="btn" id="btn-back-pre">Back to input data</button>
+          </div>
+        </div>
+
+        <!-- while running, finished or stopped -->
+        <div id="run-prog" class="view" hidden>
+          <div class="card c">
+            <div class="bd tight">
+              <div class="progress-head"><strong id="step-of">Step 1 of 1</strong><span id="elapsed" class="elapsed"></span></div>
+              <div id="overall" class="segs" aria-hidden="true"></div>
+              <p id="status" class="state" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+          <ol id="stages" class="stages rich" aria-label="Stages"></ol>
+          <p id="live" class="live sr" aria-hidden="true"></p>
+          <div class="btn-row"><button type="button" class="btn" id="btn-cancel" hidden>Cancel</button></div>
+        </div>
+
+        <div id="run-end" class="view" hidden>
+          <div id="done" class="endcard" hidden>
+            <h2><span class="ico ok"><svg class="i lg" aria-hidden="true"><use href="#i-check"/></svg></span>Analysis finished</h2>
+            <p id="done-text" class="muted"></p>
+            <div class="btn-row">
+              <button type="button" class="btn primary big" id="btn-show">Show results</button>
+              <button type="button" class="btn" id="btn-back-done">Back to input data</button>
+              <span id="newbox-run"><button type="button" class="btn" id="btn-new-run">New analysis</button></span>
+              <span class="confirm" id="new-confirm-run" hidden>Discard these results and go back to the input data?
+                <button type="button" class="btn sm" id="btn-new-run-yes">Discard</button> <button type="button" class="btn sm" id="btn-new-run-no">Keep</button></span>
+            </div>
+          </div>
+          <div class="endcard bad" id="err-card" hidden>
+            <h2><span class="ico err"><svg class="i lg" aria-hidden="true"><use href="#i-alert"/></svg></span>The analysis stopped</h2>
+            <div id="error" class="errblk" role="alert" hidden></div>
+            <p class="btn-row" id="err-actions" hidden><button type="button" class="btn primary big" id="btn-back">Back to input data</button></p>
+          </div>
+        </div>
+
+        <details id="log-details" class="logbox">
+          <summary>Technical log</summary>
+          <pre id="log" class="log" tabindex="0" role="log" aria-label="Messages from the SRASel stages"></pre>
+        </details>
+      </section>
+
+      <!-- 3 · Results -->
+      <section id="panel-results" class="view" role="tabpanel" aria-labelledby="tab-results" tabindex="-1" hidden>
+        <div class="page-head">
+          <div class="row">
+            <div>
+              <h1>Results</h1>
+              <p id="res-meta" class="bar-meta" role="status"></p>
+            </div>
+            <div class="btn-row">
+              <span id="newbox"><button type="button" class="btn" id="btn-new">New analysis</button></span>
+              <span class="confirm" id="new-confirm" hidden>Discard these results and go back to the input data?
+                <button type="button" class="btn sm" id="btn-new-yes">Discard</button> <button type="button" class="btn sm" id="btn-new-no">Keep</button></span>
+              <span class="dlsplit">
+                <button type="button" class="btn primary" id="btn-zip"><svg class="i" aria-hidden="true"><use href="#i-download"/></svg>Download results (.zip)</button>
+                <button type="button" class="btn primary caret" id="dl-more" aria-haspopup="menu" aria-expanded="false" aria-controls="dl-menu" aria-label="More downloads"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg></button>
+                <div class="menu" id="dl-menu" role="menu" aria-label="Downloads" hidden>
+                  <button type="button" role="menuitem" id="btn-report-dl">Report (.html)</button>
+                  <button type="button" role="menuitem" id="btn-summary-dl">Summary (.md)</button>
+                </div>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="subtabs" role="tablist" aria-label="Result views" id="subtabs">
+          <button type="button" role="tab" id="rtab-summary" data-r="summary" aria-controls="rp-overview" aria-selected="true">Overview</button>
+          <button type="button" role="tab" id="rtab-variants" data-r="variants" aria-controls="report-host" aria-selected="false" tabindex="-1">Variants</button>
+          <button type="button" role="tab" id="rtab-traj" data-r="traj" aria-controls="report-host" aria-selected="false" tabindex="-1">Trajectories</button>
+          <button type="button" role="tab" id="rtab-genes" data-r="genes" aria-controls="report-host" aria-selected="false" tabindex="-1">Genes</button>
+          <button type="button" role="tab" id="rtab-quality" data-r="quality" aria-controls="report-host" aria-selected="false" tabindex="-1">Quality</button>
+          <button type="button" role="tab" id="rtab-about" data-r="about" aria-controls="report-host" aria-selected="false" tabindex="-1">About</button>
+          <button type="button" role="tab" id="rtab-tables" data-r="tables" aria-controls="rp-tables" aria-selected="false" tabindex="-1">Tables</button>
+          <button type="button" role="tab" id="rtab-files" data-r="files" aria-controls="rp-files" aria-selected="false" tabindex="-1">Files</button>
+        </div>
+
+        <!-- Overview: the numbers the page knows, then the report's Summary -->
+        <div id="rp-overview" class="rview" role="tabpanel" aria-labelledby="rtab-summary">
+          <div class="kpis" id="kpis"></div>
+          <div class="callout warn" id="not-analysed" hidden>
+            <h3>Patients not analysed</h3>
+            <ul id="not-analysed-list"></ul>
+          </div>
+          <div class="card c" id="sum-box">
+            <div class="hd"><h2>Per patient</h2></div>
+            <div class="bd tight">
+              <div class="tablewrap"><table class="grid" id="sum-table"><caption class="sr">Dates and tag counts per patient</caption>
+                <thead><tr><th scope="col">Patient</th>
+                  <th scope="col" title="Largest number of covered dates among the tested trajectories of this patient. With 3 dates no variant can be tagged; with 4 dates tags are borderline.">Dates</th>
+                  <th scope="col" title="Allele trajectories that passed the filters and received a permutation p-value (variants below the |Δf| threshold are not included).">Tested trajectories</th>
+                  <th scope="col" title="Alleles with permutation p&lt;0.05 and |Δf| at or above the threshold of this run; positions counts each site once, even when both of its alleles are tagged.">Tagged (p&lt;0.05 and |Δf|≥threshold)</th></tr></thead>
+                <tbody></tbody></table></div>
+              <p class="hint">Dates = largest number of covered dates among the tested trajectories of that patient (“—” when none was tested). Tags are counted as alleles and as positions.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- the report (Overview, Variants, Trajectories, Genes, Quality, About): one sandboxed iframe, its tab chosen from the sub-tabs above. allow-downloads only lets the report's own SVG/PNG/TSV buttons save a file; it grants no origin and no other right -->
+        <div id="report-host" role="tabpanel" aria-labelledby="rtab-summary">
+          <iframe id="report-frame" title="SRASel HTML report" sandbox="allow-scripts allow-downloads" referrerpolicy="no-referrer"></iframe>
+        </div>
+
+        <div id="rp-tables" class="rview" role="tabpanel" aria-labelledby="rtab-tables" hidden>
+          <div class="card c tables-box" id="tables-box">
+            <div class="hd"><h2>Tables per patient</h2></div>
+            <div class="bd">
+              <div class="tools">
+                <label for="tbl-pick" class="sr">Table</label>
+                <select id="tbl-pick" aria-label="Table"></select>
+                <label for="tbl-q" class="sr">Filter rows</label>
+                <input type="text" id="tbl-q" placeholder="Filter rows" autocomplete="off" spellcheck="false">
+                <label class="check"><input type="checkbox" id="tbl-internal"> Show internal and raw columns</label>
+                <span class="grow"></span>
+                <button type="button" class="btn sm" id="btn-tbl-dl"><svg class="i" aria-hidden="true"><use href="#i-download"/></svg>Download this table</button>
+              </div>
+              <p class="hint" id="tbl-note"></p>
+              <div class="tablewrap tall" id="tbl-wrap"><table class="grid data" id="tbl"></table></div>
+              <div class="pager" id="tbl-pager">
+                <button type="button" class="btn sm" id="tbl-prev">Previous</button>
+                <span id="tbl-page" aria-live="polite"></span>
+                <button type="button" class="btn sm" id="tbl-next">Next</button>
+              </div>
+              <details class="adv">
+                <summary>Columns shown</summary>
+                <dl class="colguide" id="tbl-guide"></dl>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <div id="rp-files" class="rview" role="tabpanel" aria-labelledby="rtab-files" hidden>
+          <div class="card c files-box" id="files-box">
+            <div class="hd"><h2>All files <span class="sum" id="files-count"></span></h2></div>
+            <div class="bd tight"><ul class="files rich" id="files"></ul></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<dialog id="about" class="about" aria-labelledby="about-h">
+  <div class="hd"><h2 id="about-h">About browser mode</h2><button type="button" class="btn sm" id="about-close">Close</button></div>
+  <div class="bd">
+    <p>SRASel looks for directional frequency changes of viral variants across several samples of the same patient over time. Browser mode runs the same scientific engine as the command line, in Python compiled to WebAssembly (Pyodide), inside this tab. Nothing is uploaded: the only download is the Python runtime, from cdn.jsdelivr.net.</p>
+    <p id="versions">Pyodide <span data-pyodide>…</span> · <a href="../#m-cli">Command line</a> · <a href="../#m-local">Local web interface</a> · <a href="../">The three ways of running SRASel</a></p>
+    <p class="contact">Contact: <a href="mailto:paula.iglesias.rivas@uvigo.es">paula.iglesias.rivas@uvigo.es</a> · <a href="mailto:luisdaniel.gonzalez@uvigo.es">luisdaniel.gonzalez@uvigo.es</a></p>
+  </div>
+</dialog>
+<script src="app.js" defer></script>
+</body>
+</html>

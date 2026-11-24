@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SRASel · three ways to run it</title>
+<meta name="description" content="SRASel detects within-host selection in viral time series. Run it on the command line, with the local web interface, or (experimental) in your browser.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="landing">
+<a class="skip" href="#main">Skip to content</a>
+<header class="lp-top">
+  <div class="lp-in">
+    <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="20" cy="20" r="8"/><circle cx="20" cy="20" r="2.5" fill="currentColor" stroke="none"/><path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M31.3 8.7l-3.5 3.5M12.2 27.8l-3.5 3.5"/></svg>
+    <div><h1>SRASel</h1><span class="sub">Within-host selection in viral time series</span></div>
+    <span class="grow"></span>
+    <button type="button" id="theme-btn" class="lp-theme" aria-label="Toggle light or dark theme">Theme</button>
+  </div>
+</header>
+
+<main id="main" class="lp-main">
+  <p class="lead">SRASel looks for directional frequency changes of viral variants across several samples of the same patient
+    over time. The same scientific engine is available in three ways; pick the one that fits your data.</p>
+
+  <div class="modes">
+    <!-- Browser -->
+    <section class="mode" aria-labelledby="m-browser">
+      <p class="tag exp">Experimental</p>
+      <h2 id="m-browser">Run in Browser</h2>
+      <div class="grow">
+        <p>Runs the real SRASel stages (Python compiled to WebAssembly, Pyodide) inside your browser tab. Nothing to install, nothing uploaded.</p>
+        <p class="rule-note">It can be slower than the command line and can fail because of browser memory limits, especially with large inputs or many permutations.</p>
+        <p><strong>BAM files or bam-readcount tables.</strong> BAM files are counted in the browser with pysam (same rules as
+          <code>bam-readcount -q 20 -b 20 -w 0</code>, identical counts on the 47 real BAMs tested) and read in place, never uploaded; or load
+          the <code>&lt;sample&gt;_RG_readcount.txt</code> tables, which is faster. A dates file and a GenBank reference are needed in both cases.</p>
+      </div>
+      <div class="btnrow"><a class="btn primary" href="browser/">Open the browser runner</a></div>
+    </section>
+
+    <!-- Local web -->
+    <section class="mode" aria-labelledby="m-local">
+      <p class="tag">Your computer</p>
+      <h2 id="m-local">Run with Local Python: web interface</h2>
+      <div class="grow">
+        <p>A graphical interface served only on your own machine. It reads your BAM files where they are and runs the full pipeline with
+          the native tools, so nothing leaves your computer.</p>
+        <pre class="cmd"><code>git clone https://github.com/&lt;USER&gt;/SRASel.git &amp;&amp; cd SRASel
+conda env create -f environment.yml &amp;&amp; conda activate srasel
+srasel web</code></pre>
+        <p class="hint">The conda environment installs <code>samtools</code> and <code>bam-readcount</code>, which are not Python packages; check them with
+          <code>srasel doctor</code>. Then open the address that <code>srasel web</code> prints. Replace <code>&lt;USER&gt;</code> by the account that hosts the repository.</p>
+      </div>
+    </section>
+
+    <!-- CLI -->
+    <section class="mode" aria-labelledby="m-cli">
+      <p class="tag rec">Recommended</p>
+      <h2 id="m-cli">Command line</h2>
+      <div class="grow">
+        <p>The reference way to run SRASel: BAM files in, results out, several cores, resumable, suitable for clusters.</p>
+        <pre class="cmd"><code>git clone https://github.com/&lt;USER&gt;/SRASel.git &amp;&amp; cd SRASel
+conda env create -f environment.yml
+conda activate srasel
+srasel doctor</code></pre>
+        <p class="hint">SRASel is installed from the repository (it is not on PyPI). If conda reports a <em>libmamba</em> error, add <code>--solver classic</code>.</p>
+        <p>Example (<code>samples.tsv</code> has three tab-separated columns: BAM path, patient, sampling date):</p>
+        <pre class="cmd"><code>srasel run --samples samples.tsv \
+  --virus "Severe acute respiratory syndrome coronavirus 2" \
+  --email you@example.org --out srasel_out \
+  --threads 8 --nperm 2000 --seed 1</code></pre>
+        <p class="hint">Results (tables, plots, <code>report.html</code>, <code>SUMMARY.md</code>) are written to <code>srasel_out/</code>.
+          Use <code>--ref-file my.gb</code> instead of <code>--virus</code> to work offline with your own GenBank reference.</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="h-which">
+    <h2 id="h-which">Which one should I use?</h2>
+    <ul class="tight">
+      <li>Real data, many samples, long jobs: <strong>command line</strong>.</li>
+      <li>You prefer buttons to options but have the BAM files on your computer: <strong>local web interface</strong>.</li>
+      <li>You only want to try the analysis, or you have a small data set (BAM files or bam-readcount tables) and nothing installed: <strong>browser</strong>.</li>
+    </ul>
+    <p class="hint">All three run the same engine.</p>
+  </section>
+</main>
+<footer class="foot"><p>Static page: no server, no cookies, no analytics.</p></footer>
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById("theme-btn");
+  try { var t = localStorage.getItem("srasel-theme"); if (t) root.setAttribute("data-theme", t); } catch (e) {}
+  btn.addEventListener("click", function () {
+    var dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = dark ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("srasel-theme", next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

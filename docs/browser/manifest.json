@@ -1,0 +1,12 @@
+{
+ "wheel": "srasel-2.1.0rc1-py3-none-any.whl",
+ "version": "2.1.0rc1",
+ "sha256": "7b8838a95383020ab40528f1b877c1078d4c9e21baed4a71e290354e0e4e6dc2",
+ "bytes": 139154,
+ "sources": {
+  "srasel/__init__.py": "85a8b0d13a459c56587f95bbcd8bc96f792fef1d8213f4dab92bb3b6fd1cd6c2",
+  "srasel/engine.py": "ddbaba9f6f39263fb97736fb7f0dd4f3c98265645bb9a7d1ec1dc8b7494d9cc2",
+  "srasel/bamcount.py": "37f2c952a0a19a267e10169bc15be3abf9233556461fe9b32feedd9915752e5a",
+  "srasel/segments.py": "25f1da2ba74ba0f6471cc1e4265d7463dd70f7a0ac44355671e4a10d1d50c807"
+ }
+}

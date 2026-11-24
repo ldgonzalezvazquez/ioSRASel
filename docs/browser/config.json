@@ -1,0 +1,27 @@
+{
+ "pyodide": "314.0.7",
+ "index_url": "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/",
+ "packages": [
+  "numpy",
+  "pandas",
+  "scipy",
+  "biopython",
+  "matplotlib",
+  "joblib",
+  "tqdm"
+ ],
+ "bam_packages": [
+  "pysam"
+ ],
+ "python": "3.14.2",
+ "package_versions": {
+  "numpy": "2.4.6",
+  "pandas": "3.0.2",
+  "scipy": "1.18.0",
+  "biopython": "1.87",
+  "matplotlib": "3.10.8",
+  "joblib": "1.5.3",
+  "tqdm": "4.67.3",
+  "pysam": "0.23.0"
+ }
+}

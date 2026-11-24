@@ -1,0 +1,22 @@
+{
+ "title": "phiX174, synthetic example (2 patients, 10 samples)",
+ "tables": [
+  "P1-1a_RG_readcount.txt.gz",
+  "P1-1b_RG_readcount.txt.gz",
+  "P1-2_RG_readcount.txt.gz",
+  "P1-3_RG_readcount.txt.gz",
+  "P1-4_RG_readcount.txt.gz",
+  "P1-5_RG_readcount.txt.gz",
+  "P2-1_RG_readcount.txt.gz",
+  "P2-2_RG_readcount.txt.gz",
+  "P2-3_RG_readcount.txt.gz",
+  "P2-4_RG_readcount.txt.gz"
+ ],
+ "dates": "dates.tsv",
+ "genbank": [
+  "reference.gbk"
+ ],
+ "nperm": 200,
+ "seed": 1,
+ "note": "Synthetic reads made by tests/fixtures/make_bams.py (case phix) and counted with bam-readcount -q 20 -b 20 -w 0; each table was verified against tests/regression/golden/phix/MANIFEST.tsv"
+}
