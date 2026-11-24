@@ -1,5 +1,6 @@
 {
- "title": "phiX174, synthetic example (2 patients, 10 samples)",
+ "title": "Simulated phiX174 demo: 2 fictional patients, 10 samples",
+ "description": "Simulated reads of phage phiX174 (used only as a reference) with variants planted at known frequencies, for two fictional patients (P1: 6 dates, P2: 4 dates). Not real patient data. Expected: 8 of 9 variants labelled in P1, 2 of 9 in P2.",
  "tables": [
   "P1-1a_RG_readcount.txt.gz",
   "P1-1b_RG_readcount.txt.gz",

@@ -110,9 +110,9 @@
         $("rt-pill").title = "";
         $("versions").textContent = "";
         $("versions").append(`Pyodide ${m.pyodide} · Python ${m.versions.python} · numpy ${m.versions.numpy} · pandas ${m.versions.pandas} · scipy ${m.versions.scipy} · biopython ${m.versions.biopython} · SRASel engine ${m.versions.srasel} · runtime ready in ${m.seconds} s · `);
-        [["../#m-cli", "Command line"], ["../#m-local", "Local web interface"], ["../", "The three ways of running SRASel"]].forEach(([h, t], i) => {
+        [["../ways/#m-cli", "Command line"], ["../ways/#m-local", "Local web interface"], ["../ways/", "The three ways of running SRASel"]].forEach(([h, t], i) => {
           if (i) $("versions").append(" · ");
-          const a = document.createElement("a"); a.href = h; a.textContent = t; $("versions").append(a);
+          const a = document.createElement("a"); a.href = h; a.textContent = t; a.target = "_blank"; a.rel = "noopener"; $("versions").append(a);
         });
         refresh();
         break;
@@ -602,7 +602,7 @@
   });
 
   $("btn-demo").addEventListener("click", async () => {
-    flash("Loading the demo files from this site …");
+    flash("Loading the simulated demo (10 count tables, dates and a GenBank reference) from this site …");
     try {
       const man = await (await fetch("demo/manifest.json", { cache: "no-cache" })).json();
       const get = async (n) => { const r = await fetch("demo/" + n); if (!r.ok) throw new Error(`demo/${n}: HTTP ${r.status}`); return r.arrayBuffer(); };
@@ -614,7 +614,7 @@
       $("dates-src").textContent = man.dates;
       $("p-nperm").value = man.nperm; $("p-seed").value = man.seed; $("p-delta").value = 0.03;
       renderLists();
-      flash(`Demo loaded: ${man.title}. Continue to Run analysis.`);
+      flash(`Demo loaded: ${man.title}. Next: press Continue to Run analysis, then Run analysis (about a minute).`);
     } catch (err) { flash("The demo could not be loaded: " + err.message, "err"); }
   });
 

@@ -26,7 +26,7 @@ A patient with fewer than 3 dates is listed as *not analysed* (the other patient
 **Not accepted**
 | Input | What happens |
 |---|---|
-| SAM, CRAM, FASTQ | not read. A `.sam` in the folder is ignored and its row in the dates file is reported as "does not match any BAM". Convert to BAM first ([FASTQ_TO_BAM.md](FASTQ_TO_BAM.md)). |
+| SAM, CRAM, FASTQ | not read. A `.sam` in the folder is ignored and its row in the dates file is reported as "does not match any BAM". Convert to BAM first (section 10). |
 | A damaged or truncated BAM, or a text file named `.bam` | stops: `the BAM … is damaged or truncated` |
 | BAMs aligned to another sequence than the reference you give | stops before counting: `The contigs of your BAMs are not in the reference: …` (lists both sets of names) |
 | The same BAM twice | stops: `The same BAM appears twice` |
@@ -84,10 +84,41 @@ One of these (in this priority order when several are given):
 | *(none)* | nothing; the contig names in the BAM header are used if they are NCBI accessions | internet | no |
 
 **The rule that matters: the reference must be the sequence your BAMs were aligned to.** SRASel compares, before counting, the contig names, lengths and (if the header has it) the md5 of every contig. A contig is paired with the reference when its name matches, or matches without the version (`NC_001422` ≈ `NC_001422.1`), or you give `--alias NAME_IN_BAM=NAME_IN_REFERENCE`, or it is the only contig of that length. A different virus, another numbering or another length stops the run before any counting.
-* **Segmented viruses**: the reference must contain **every** segment of the BAM header (a missing one stops the run), and every BAM must have the same segments in the same order. Give one GenBank per segment, or one file with several records (same results), or `--ref ACC1,ACC2,…`; for FASTA + genes give **one FASTA with all the segments and one gene list** whose `contig` column names the segment; for `--consensus` give one FASTA with one record per segment and one annotated source per segment (paired automatically by alignment, any order). Segments are matched to the BAM by name (or `--alias`, or unique length). The order in which you give them only changes the internal global numbering (`pos`, names of the per-position PDFs) and, by Monte-Carlo noise, the permutation p-values (slopes, Δf, amino acids and labels were unchanged in the LCMV test); keep the BAM-header order (`samtools view -H x.bam | grep '^@SQ'`). The local web page and the online page have a **Segmented virus** switch: with it on, *FASTA and gene list* takes one FASTA and one gene list per segment and joins them in the order of the list (`srasel.segments`; identical to joining them with `cat`); the command line takes one of each. Full guide with commands: README, “Segmented viruses (several segments)”.
+* **Segmented viruses**: the reference must contain **every** segment of the BAM header (a missing one stops the run), and every BAM must have the same segments in the same order. Give one GenBank per segment, or one file with several records (same results), or `--ref ACC1,ACC2,…`; for FASTA + genes give **one FASTA with all the segments and one gene list** whose `contig` column names the segment; for `--consensus` give one FASTA with one record per segment and one annotated source per segment (paired automatically by alignment, any order). Segments are matched to the BAM by name (or `--alias`, or unique length). The order in which you give them only changes the internal global numbering (`pos`, names of the per-position PDFs) and, by Monte-Carlo noise, the permutation p-values (slopes, Δf, amino acids and labels were unchanged in the LCMV test); keep the BAM-header order (`samtools view -H x.bam | grep '^@SQ'`). The local web page and the online page have a **Segmented virus** switch: with it on, *FASTA and gene list* takes one FASTA and one gene list per segment and joins them in the order of the list (`srasel.segments`; identical to joining them with `cat`); the command line takes one of each. The table and the example just below give the commands.
 * **BAMs aligned to a consensus** (contigs named like `PB2`, `PB1`…): RefSeq GenBanks (`NC_007366.1`…) are the wrong reference. Use the annotated consensus (`reference/references.gb` written by `srasel run --consensus`, shipped as `consensus_annotated.gb` in the examples), or `--consensus` with a related annotated genome.
 * **A GenBank is a sequence plus where its genes are.** SRASel needs the genes for the amino-acid change, the codon and the gene filter. A GenBank in which no record has a CDS stops at the reference step: `The reference has no genes`; a file that is not GenBank (for example a FASTA renamed `.gb`) stops with `Biopython said: No records found`.
 * Spliced genes, overlapping genes and ribosomal slips come from the GenBank `join(…)` locations; nothing needs to be told to SRASel.
+
+### Segmented viruses: how to give the reference
+
+The example is for 3 segments `seg1`, `seg2`, `seg3`, in BAM-header order.
+
+| You have… | Command line | Local web page | Online page |
+|---|---|---|---|
+| One GenBank file per segment (the usual case) | `--ref-file seg1.gb seg2.gb seg3.gb` (one option, files separated by spaces) | **Segmented virus** on, **GenBank file(s)**, add the files; ↑ ↓ put them in order | the same |
+| One GenBank file with all the segments (several `LOCUS … //` records) | `--ref-file all.gb`; to make it: `cat seg1.gb seg2.gb seg3.gb > all.gb` (same results as three files) | the same, one file | the same |
+| NCBI accessions | `--ref ACC1,ACC2,ACC3` (commas, no spaces; needs internet and `--email`) | **NCBI accession / virus name** | not available: download the `.gb` files once |
+| A FASTA and a gene list | **one** FASTA with all the segments (`cat seg1.fa seg2.fa seg3.fa > all.fa`) and **one** gene list with the segment name in the `contig` column: `--fasta all.fa --genes genes.tsv` | **Segmented virus** on, **FASTA and gene list**: one FASTA and one list per segment, or one of each; the page joins them in the order of the lists | the same |
+| Your own consensus | `--consensus all_consensus.fa` (one record per segment, named as the contigs of your BAMs) and `--consensus-source` with the annotated GenBank file(s) or accessions of a related virus, one per segment (paired by alignment, any order). Writes `reference/references.gb` and `reference/transfer_report.tsv`. Needs `minimap2` | **Own consensus** | not available: load the annotated consensus as GenBank |
+| A virus name | `--virus "Influenza A virus"`: SRASel looks for the RefSeq group whose segment lengths equal those of your BAM header and asks which one if none does (with `--yes` it stops; it never guesses) | **NCBI accession / virus name** | not available |
+
+A *fragment* is not a segment: `--fragments` is for samples split into several BAMs (one per genome fragment), not for a segmented virus. A segment without genes is still analysed, but its variants have no gene, codon or amino acid.
+
+Example, two segments with a FASTA and a gene list. `all.fa` contains `>NC_004294.1` and `>NC_004291.1`; `genes.tsv` (tab-separated, **one header line**, then the genes of **all** segments):
+
+```
+contig	gene	start	end	strand	type	product
+NC_004294.1	GP	78	1574	+	CDS	envelope glycoprotein
+NC_004294.1	NP	1639	3315	-	CDS	nucleoprotein
+NC_004291.1	L	33	6665	+	CDS	L protein
+```
+
+```bash
+srasel run --bams examples/simulated/lcmv_segmented/bams --dates examples/simulated/lcmv_segmented/dates.tsv \
+           --fasta all.fa --genes genes.tsv --out results_lcmv --seed 1 --yes
+```
+
+If you already have one gene list per segment, join them keeping a single header line (`cat list1.tsv > genes.tsv; tail -n +2 list2.tsv >> genes.tsv`). A GFF3 can hold all the segments too. Evidence: [validation/redesign/MORE_DATASETS.md](../validation/redesign/MORE_DATASETS.md).
 
 ## 6. Gene list (`--genes`, with `--fasta`)
 
@@ -129,6 +160,29 @@ Both web pages stop in the same way as the command line (same engine, same messa
 ## 9. Where to find ready-made inputs
 
 `examples/simulated/` and `examples/real/` each hold BAMs, a dates file and the matching reference, with the expected counts in `expected_output/`. Three of the real ones have several patients in one run (`hiv1_three_patients`, `norovirus_P15_P17`, `sars2_freiburg_kemp`): use them as a template for your own `bams/` folder and `dates.tsv`.
+
+## 10. From FASTQ to the BAM files SRASel needs
+
+SRASel starts from **aligned reads** (one BAM per sample). If you only have FASTQ files, align them to the reference you will give SRASel. With the tools installed by `environment.yml` (short Illumina reads, paired-end):
+
+```bash
+# 1) the reference: a GenBank file you already have, or one downloaded from NCBI (needs internet)
+srasel prepare-reference --refs my_reference.gb --outdir reference            # or: --refs NC_045512.2 --email you@example.org
+# 2) align each sample to reference/reference.fna and sort it
+mkdir -p bams
+minimap2 -ax sr reference/reference.fna sample1_R1.fastq.gz sample1_R2.fastq.gz | samtools sort -o bams/P1-1.bam -
+samtools index bams/P1-1.bam
+```
+
+Repeat step 2 for every sample (name them `<patient>-<n>.bam`, or give the patient in the dates file). Single-end reads: one FASTQ. Then run SRASel with the same reference you aligned to:
+
+```bash
+srasel run --bams bams --dates dates.tsv --ref-file my_reference.gb --out srasel_out --seed 1
+```
+
+* The reads must be aligned to the **same sequence** SRASel uses as reference (contig name, length and checksum are compared before counting). Any aligner is fine (`bwa mem`, `bowtie2`, …) if the BAM header names that sequence.
+* For amplicon data (ARTIC, …) trim the primers first (for example `ivar trim`); SRASel does not do it.
+* This recipe (minimap2 `-ax sr`) was run on public short reads and checked with `srasel run --check-only`. **Long-read data (Nanopore, PacBio) were not tested with SRASel.**
 
 ## How this was checked
 

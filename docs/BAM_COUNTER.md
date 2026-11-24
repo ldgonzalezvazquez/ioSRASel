@@ -8,7 +8,7 @@ Browser Mode (WebAssembly) and installs without conda.
 * Browser Mode: load BAM files instead of tables; they are read in place (not copied into memory, not uploaded).
 * `srasel run` does **not** use it. It is an alternative, not a replacement.
 
-Full validation (versions, commands, edge cases, 39 real BAMs, downstream, Pyodide): `validation/B_bam/BAM_READCOUNT_COMPARISON.md`.
+Full validation (versions, commands, edge cases, 39 real BAMs, downstream, Pyodide): [validation/BAM_READCOUNT_COMPARISON.md](../validation/BAM_READCOUNT_COMPARISON.md).
 
 ## What it does (rules of bam-readcount 1.0.1, found by comparison; each one has an edge case in `tests/regression/test_bamcount_edge.py`)
 * Reads with flag 0x4, 0x100, 0x200 or 0x400 never enter the pileup: not counted, their positions are not printed, they take no buffer node.
@@ -53,4 +53,4 @@ byte-for-byte copy** of `bam-readcount`'s output, but everything SRASel reads is
   record there: undefined behaviour, not reproduced; bamcount counts nothing for them).
 * The two filled statistics columns (`avg_se_mapping_quality`, `avg_num_mismatches_as_fraction`) are not reproduced.
 * The 8000 rule and the other rules reproduce the installed `bam-readcount` 1.0.1 (bioconda build hd576cc4_2); another build could differ.
-* Speed: about 10 s per 235,000 reads natively (0.8–1.7× the time of bam-readcount on the 39 real BAMs); in WebAssembly slower (measured values in BROWSER_MODE.md).
+* Speed: about 10 s per 235,000 reads natively (0.8–1.7× the time of bam-readcount on the 39 real BAMs); in WebAssembly slower (see [WEB.md](WEB.md#limits-of-the-online-page)).
