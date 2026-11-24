@@ -113,8 +113,6 @@ srasel run --bams bams/ --dates dates.tsv --ref-file reference.gb --out check --
 srasel run --bams bams/ --dates dates.tsv --ref-file reference.gb --out results --resume
 ```
 
-On a Slurm cluster use the template [slurm/srasel_run.sbatch](../slurm/srasel_run.sbatch) (never run on a real cluster).
-
 ## Known problem: `srasel selection` alone
 
 The single step `srasel selection`, run by hand with its default `-j -1` ("all cores"), stops with `too many values to unpack (expected 4)`. With `-j 1` or `-j 2` (or more) it works (`-j 0` also fails, with a different error: `ZeroDivisionError`). `srasel run`, the local web page and the online page always pass an explicit number of cores and are not affected. If you run `srasel selection` yourself, add `-j 4` or `-j 1`. Details: [validation/VALIDATION_REPORT.md](../validation/VALIDATION_REPORT.md) §7.

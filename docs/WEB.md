@@ -5,7 +5,7 @@ SRASel has two web interfaces. They look the same (a left menu with **Input data
 | | **Online page** | **Local page** (`srasel web`) |
 |---|---|---|
 | Address | `https://<USER>.github.io/SRASel/` (it opens the app directly) | printed by `srasel web`, `http://127.0.0.1:8765/?token=…` |
-| Install | nothing: a recent Chrome | the `srasel` conda environment ([README](../README.md#3-installation)) |
+| Install | nothing: a recent Chrome | the `srasel` conda environment ([README](../README.md#installation)) |
 | Input | BAM files **or** bam-readcount tables | BAM files |
 | Reference | GenBank file(s) · FASTA + gene list | GenBank file(s) · FASTA + gene list · own consensus · NCBI accession / virus name · from the BAM headers |
 | Where it runs | inside your browser tab (WebAssembly) | on your computer, full speed, all cores |

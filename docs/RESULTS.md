@@ -1,6 +1,6 @@
 # Results: files, columns and how to read them
 
-This page is the detail behind the "Interpreting results" section of the [README](../README.md#6-interpreting-results). The column definitions were checked against the output files of a real run (`examples/real/sars2_freiburg`, `--seed 1`).
+This page is the detail behind the "Interpreting results" section of the [README](../README.md#interpreting-results). The column definitions were checked against the output files of a real run (`examples/real/sars2_freiburg`, `--seed 1`).
 
 ## The results folder
 
@@ -25,7 +25,7 @@ For every patient SRASel pools the counts of the samples that share a date (repl
 2. The frequency `f = k / n` is regressed on the day by **weighted least squares** (weights = depth). The slope is **β** (change of frequency per day); **Δf = β × (last day − first day)** is the *fitted* change over the follow-up.
 3. The **p-value** is a two-sided permutation p: the dates are shuffled among the observations `--nperm` times (default 2000), and `p = (number of shuffles with |β*| ≥ |β| + 1) / (nperm + 1)`.
 4. **The label:** `pos` if `p < 0.05` and β > 0, `neg` if `p < 0.05` and β < 0. The 0.05 is fixed.
-5. **There is no correction for multiple testing.** A label means "a directional change in frequency worth a closer look"; it does not prove selection (genetic drift, linkage to a variant that is truly selected, and reversions give the same pattern).
+5. **There is no correction for multiple testing.** A label means "a directional change in frequency worth a closer look"; some labels are expected by chance.
 
 ## Columns of `<P>_variant_stats.tsv` (one row per tested allele)
 
@@ -35,7 +35,7 @@ For every patient SRASel pools the counts of the samples that share a date (repl
 | `aa_gene`, `aa_idx` | the gene used for the amino-acid change (the first annotation of the position) and the codon number in it (`ND` if non-coding) |
 | `pos`, `contig`, `contig_pos` | global position (all contigs concatenated), contig name, position inside the contig; use `contig` + `contig_pos` for segmented viruses |
 | `var` | the allele |
-| `beta` | the weighted slope, frequency per day; positive = goes up. Not a selection coefficient |
+| `beta` | the weighted slope, frequency per day; positive = goes up. Descriptive |
 | `pval` | the permutation p-value (not corrected); smallest possible value depends on `--nperm` and on the number of dates |
 | `score` | `sign(β) × \|β\| × (−log10 p)`, only a ranking key |
 | `tag` | `pos` or `neg` when labelled, empty otherwise |
@@ -98,7 +98,7 @@ So: 3 dates give statistics but no labels; 4 dates are borderline; **5 or more a
 | **β (slope)** | the depth-weighted straight-line change of an allele's frequency per day |
 | **Δf** | the fitted total change over the follow-up (β × days); positive = goes up |
 | **p** | the share of random shufflings of the dates that give a slope at least as steep; not corrected for the many alleles tested |
-| **Label (`tag`)** | `pos` or `neg`: p < 0.05 and \|Δf\| ≥ 0.03; a flag for a closer look, not proof of selection |
+| **Label (`tag`)** | `pos` or `neg`: p < 0.05 and \|Δf\| ≥ 0.03; a flag for a closer look |
 | **Depth / coverage** | the number of reads that cover a position |
 | **Replicates** | two BAMs of the same patient on the same date; their reads are added as one time point |
 | **Contig / segment** | one sequence of the reference; a segmented virus has one per segment |
